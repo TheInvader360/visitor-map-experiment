@@ -1,0 +1,23 @@
+https://scottishsnow.wordpress.com/2018/03/28/gb-postcode-polygons-open-data/
+
+docker pull osgeo/gdal:alpine-small-latest
+docker run --rm -v /home:/home osgeo/gdal:alpine-small-latest ogr2ogr -f GeoJSON -t_srs crs:84 $PWD/postcode_polygons.geojson $PWD/postcode_polygons.gpkg postcode_area
+
+Missing from geojson but present in valid list: 
+> BT (Belfast)
+> GY (Guernsey)
+> IM (Isle of Man)
+> JE (Jersey)
+
+Missing from valid list but present in geojson: 
+< EW (E1W)
+< NC (N1C)
+< WB (W1B)
+< WG (W1G)
+< WH (W1H)
+< WJ (W1J)
+< WK (W1K)
+< WT (W1T)
+< WU (W1U)
+< WW (W1W)
+
