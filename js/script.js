@@ -1,49 +1,66 @@
 const gwyneddCommunities = {
-  'Atlantis': 'Atlantis',
-  'Smallville': 'Smallville'
-  //'Aberdaron': 'Aberdaron',
-  //'Bala': 'Bala',
-  //'Beddgelert': 'Beddgelert',
-  //'Bethesda': 'Bethesda',
-  //'BlaenauFfestiniog': 'Blaenau Ffestiniog',
-  //'LlanFfestiniog': 'Llan Ffestiniog',
-  //'Penygroes': 'Penygroes',
-  //'Porthmadog': 'Porthmadog',
-  //'Pwllheli': 'Pwllheli'
+  'Aberdaron': 'Aberdaron',
+  'Bala': 'Bala',
+  'Beddgelert': 'Beddgelert',
+  'Bethesda': 'Bethesda',
+  'BlaenauFfestiniog': 'Blaenau Ffestiniog',
+  'LlanFfestiniog': 'Llan Ffestiniog',
+  'Penygroes': 'Penygroes',
+  'Porthmadog': 'Porthmadog',
+  'Pwllheli': 'Pwllheli'
 };
 
 const powysCommunities = {
-  //'Llanidloes': 'Llanidloes'
+  'Llanidloes': 'Llanidloes'
 };
 
 const ynysMonCommunities = {
-  'Gotham': 'Gotham',
-  'Themyscira': 'Themyscira'
-  //'Llangefni': 'Llangefni'
+  'Llangefni': 'Llangefni'
 };
+
+const leafletMap = L.map('map').setView([54.8, -4.5], 5);
+
+const postcodeAreaVisitorCounts = new Map();
+
+var postcodeAreasMaxVisitorCount = 0;
 
 window.addEventListener('load', function() {
   initMap();
 })
 
 function initMap() {
-  var m = L.map('map').setView([54.8, -4.5], 5);
-
-  L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+  L.tileLayer('', {
     minZoom: 5,
     maxZoom: 10,
-    attribution: '<a href="https://www.mapbox.com/">Mapbox</a>',
-    id: 'mapbox/light-v9',
-    tileSize: 512,
     zoomOffset: -1
-  }).addTo(m);
+  }).addTo(leafletMap);
 
-  L.geoJson(postcodeAreaData, { weight: 0 }).addTo(m);
+  L.geoJson(postcodeAreaData, {style: getStyle}).addTo(leafletMap);
+}
+
+function getColor(postcodeAreaCode) {
+  var count = postcodeAreaVisitorCounts.get(postcodeAreaCode)
+  var quotient = count / postcodeAreasMaxVisitorCount
+  return quotient > 0.875 ? '#005a32':
+         quotient > 0.750 ? '#238b45':
+         quotient > 0.500 ? '#41ab5d':
+         quotient > 0.250 ? '#74c476':
+         quotient > 0.125 ? '#a1d99b':
+                            '#f7fcf5';
+}
+
+function getStyle(feature) {
+  return {
+      fillColor: getColor(feature.properties.pc_area),
+      weight: 0.5,
+      opacity: 1,
+      color: 'white',
+      fillOpacity: 1
+  };
 }
 
 function setCounty(county) {
-  document.getElementById('json').textContent = '';
-
+  reset();
   var communitySelect = document.getElementById('community');
   communitySelect.value = 0;
   communitySelect.options.length = 1;
@@ -64,10 +81,9 @@ function setCounty(county) {
 }
 
 function setCommunity(community) {
-  document.getElementById('json').textContent = '';
-
+  reset();
   if (community) {
-    axios.get('http://localhost:8081/v1/api/visitor-profiles', {
+    axios.get('https://porth.patrwm.io/v1/api/visitor-profiles', {
       params: {
         community: community,
         from: '01-06-2021',
@@ -77,16 +93,36 @@ function setCommunity(community) {
     .then(function (response) {
       console.log(response);
       document.getElementById('json').textContent = JSON.stringify(response.data.data.postcodeAreaTotals, undefined, 2);
-      updateMap()
+      updateVisitorCounts(response.data.data.postcodeAreaTotals);
+      updateMap();
     })
     .catch(function (error) {
       console.log(error);
     })
-    .then(function () {
-    });
+  }
+}
+
+function reset() {
+  document.getElementById('json').textContent = '';
+  postcodeAreaVisitorCounts.clear();
+  postcodeAreasMaxVisitorCount = 0;
+  updateMap();
+}
+
+function updateVisitorCounts(postcodeAreaTotals) {
+  for (var code in postcodeAreaTotals) {
+    var count = postcodeAreaTotals[code];
+    postcodeAreaVisitorCounts.set(code, postcodeAreaTotals[code]);
+    if (count > postcodeAreasMaxVisitorCount) {
+      postcodeAreasMaxVisitorCount = count;
+    }
   }
 }
 
 function updateMap() {
-  console.log('TODO: UPDATE MAP');
+  leafletMap.eachLayer(function (layer) {
+    if (layer.feature) {
+      layer.setStyle(getStyle(layer.feature));
+    }
+  })
 }
