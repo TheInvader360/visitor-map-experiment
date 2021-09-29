@@ -10,16 +10,16 @@ Missing from geojson but present in valid list:
 > JE (Jersey)
 
 Missing from valid list but present in geojson: 
-< EW (E1W)
-< NC (N1C)
-< WB (W1B)
-< WG (W1G)
-< WH (W1H)
-< WJ (W1J)
-< WK (W1K)
-< WT (W1T)
-< WU (W1U)
-< WW (W1W)
+< EW (E1W) - manually updated to E in data.js
+< NC (N1C) - manually updated to N in data.js
+< WB (W1B) - manually updated to W in data.js
+< WG (W1G) - manually updated to W in data.js
+< WH (W1H) - manually updated to W in data.js
+< WJ (W1J) - manually updated to W in data.js
+< WK (W1K) - manually updated to W in data.js
+< WT (W1T) - manually updated to W in data.js
+< WU (W1U) - manually updated to W in data.js
+< WW (W1W) - manually updated to W in data.js
 
 -----
 
