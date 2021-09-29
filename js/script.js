@@ -41,12 +41,11 @@ function initMap() {
 function getColor(postcodeAreaCode) {
   var count = postcodeAreaVisitorCounts.get(postcodeAreaCode)
   var quotient = count / postcodeAreasMaxVisitorCount
-  return quotient > 0.875 ? '#005a32':
-         quotient > 0.750 ? '#238b45':
-         quotient > 0.500 ? '#41ab5d':
+  return quotient > 0.750 ? '#006d2c':
+         quotient > 0.500 ? '#31a354':
          quotient > 0.250 ? '#74c476':
-         quotient > 0.125 ? '#a1d99b':
-                            '#f7fcf5';
+         quotient > 0.000 ? '#bae4b3':
+                            '#edf8e9';
 }
 
 function getStyle(feature) {
