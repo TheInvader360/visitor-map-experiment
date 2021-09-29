@@ -8,3 +8,20 @@
 #json {
   font-size: 8px;
 }
+
+.info {
+  padding: 6px;
+  background: #e8f4f8;
+  border-radius: 5px;
+}
+
+.legend {
+  line-height: 18px;
+  color: #555;
+}
+.legend i {
+  width: 18px;
+  height: 18px;
+  float: left;
+  margin-right: 6px;
+}

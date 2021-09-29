@@ -18,10 +18,9 @@ const ynysMonCommunities = {
   'Llangefni': 'Llangefni'
 };
 
-const leafletMap = L.map('map').setView([54.8, -4.5], 5);
-
+const leafletMap = L.map('map').setView([55, -2], 5);
+const legend = L.control({position: 'bottomright'});
 const postcodeAreaVisitorCounts = new Map();
-
 var postcodeAreasMaxVisitorCount = 0;
 
 window.addEventListener('load', function() {
@@ -38,19 +37,22 @@ function initMap() {
   L.geoJson(postcodeAreaData, {style: getStyle}).addTo(leafletMap);
 }
 
-function getColor(postcodeAreaCode) {
-  var count = postcodeAreaVisitorCounts.get(postcodeAreaCode)
-  var quotient = count / postcodeAreasMaxVisitorCount
-  return quotient > 0.750 ? '#006d2c':
-         quotient > 0.500 ? '#31a354':
-         quotient > 0.250 ? '#74c476':
-         quotient > 0.000 ? '#bae4b3':
-                            '#edf8e9';
+function getColorByPostcodeAreaCode(postcodeAreaCode) {
+  return getColorByVisitorCount(postcodeAreaVisitorCounts.get(postcodeAreaCode));
+}
+
+function getColorByVisitorCount(visitorCount) {
+  var quotient = visitorCount / postcodeAreasMaxVisitorCount;
+  return quotient > 0.75 ? '#006d2c':
+         quotient > 0.5  ? '#31a354':
+         quotient > 0.25 ? '#74c476':
+         quotient > 0    ? '#bae4b3':
+                           '#edf8e9';
 }
 
 function getStyle(feature) {
   return {
-      fillColor: getColor(feature.properties.pc_area),
+      fillColor: getColorByPostcodeAreaCode(feature.properties.pc_area),
       weight: 0.5,
       opacity: 1,
       color: 'white',
@@ -124,4 +126,17 @@ function updateMap() {
       layer.setStyle(getStyle(layer.feature));
     }
   })
+
+  leafletMap.removeControl(legend);
+  if (postcodeAreasMaxVisitorCount > 0) {
+    legend.onAdd = function () {
+      var div = L.DomUtil.create('div', 'info legend');
+      var grades = [0, Math.floor(0.25 * postcodeAreasMaxVisitorCount), Math.floor(0.5 * postcodeAreasMaxVisitorCount), Math.floor(0.75 * postcodeAreasMaxVisitorCount), postcodeAreasMaxVisitorCount];
+      for (var i = 0; i < grades.length; i++) {
+        div.innerHTML += '<i style="background:' + getColorByVisitorCount(grades[i]) + '"></i>' + (grades[i] > 0 ? ' Up to ' : ' ') + grades[i] + '<br>';
+      }
+      return div;
+    };  
+    legend.addTo(leafletMap);
+  }
 }
