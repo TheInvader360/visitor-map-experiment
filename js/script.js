@@ -18,10 +18,13 @@ const ynysMonCommunities = {
   'Llangefni': 'Llangefni'
 };
 
-const leafletMap = L.map('map').setView([55, -2], 5);
-const legend = L.control({position: 'bottomright'});
 const postcodeAreaVisitorCounts = new Map();
 var postcodeAreasMaxVisitorCount = 0;
+
+const map = L.map('map').setView([55, -2], 5);
+const geojson = L.geoJson(postcodeAreaData, {style: getStyle, onEachFeature: onEachFeature});
+const info = L.control({position: 'topright'});
+const legend = L.control({position: 'bottomright'});
 
 window.addEventListener('load', function() {
   initMap();
@@ -32,9 +35,43 @@ function initMap() {
     minZoom: 5,
     maxZoom: 10,
     zoomOffset: -1
-  }).addTo(leafletMap);
+  }).addTo(map);
 
-  L.geoJson(postcodeAreaData, {style: getStyle}).addTo(leafletMap);
+  geojson.addTo(map);
+
+  info.onAdd = function () {
+    this._div = L.DomUtil.create('div', 'info');
+    this.update();
+    return this._div;
+  };
+  info.update = function (props) {
+    var message = 'Hover over a postcode area';
+    if (props) {
+      var count = postcodeAreaVisitorCounts.get(props.pc_area);
+      switch (count) {
+        case undefined:
+          message = `<b>0</b> visitors from the <b>${props.pc_area}</b> area`;
+          break;
+        case 1:
+          message = `<b>1</b> visitor from the <b>${props.pc_area}</b> area`;
+          break;
+        default:
+          message = `<b>${count}</b> visitors from the <b>${props.pc_area}</b> area`;
+      }
+    }
+    if (this._div) {
+      this._div.innerHTML = '<h6>Visitor Home Locations</h6>' + message;
+    }
+  };
+
+  legend.onAdd = function () {
+    var div = L.DomUtil.create('div', 'info legend');
+    var grades = [0, Math.floor(0.25 * postcodeAreasMaxVisitorCount), Math.floor(0.5 * postcodeAreasMaxVisitorCount), Math.floor(0.75 * postcodeAreasMaxVisitorCount), postcodeAreasMaxVisitorCount];
+    for (var i = 0; i < grades.length; i++) {
+      div.innerHTML += '<i style="background:' + getColorByVisitorCount(grades[i]) + '"></i>' + (grades[i] > 0 ? ' Up to ' : ' ') + grades[i] + '<br>';
+    }
+    return div;
+  };
 }
 
 function getColorByPostcodeAreaCode(postcodeAreaCode) {
@@ -121,22 +158,31 @@ function updateVisitorCounts(postcodeAreaTotals) {
 }
 
 function updateMap() {
-  leafletMap.eachLayer(function (layer) {
+  map.eachLayer(function (layer) {
     if (layer.feature) {
       layer.setStyle(getStyle(layer.feature));
     }
   })
 
-  leafletMap.removeControl(legend);
+  map.removeControl(legend);
+  map.removeControl(info);
   if (postcodeAreasMaxVisitorCount > 0) {
-    legend.onAdd = function () {
-      var div = L.DomUtil.create('div', 'info legend');
-      var grades = [0, Math.floor(0.25 * postcodeAreasMaxVisitorCount), Math.floor(0.5 * postcodeAreasMaxVisitorCount), Math.floor(0.75 * postcodeAreasMaxVisitorCount), postcodeAreasMaxVisitorCount];
-      for (var i = 0; i < grades.length; i++) {
-        div.innerHTML += '<i style="background:' + getColorByVisitorCount(grades[i]) + '"></i>' + (grades[i] > 0 ? ' Up to ' : ' ') + grades[i] + '<br>';
-      }
-      return div;
-    };  
-    legend.addTo(leafletMap);
+    legend.addTo(map);
+    info.addTo(map);
   }
+}
+
+function onEachFeature(feature, layer) {
+  layer.on({
+      mouseover: handleMouseoverFeature,
+      mouseout: handleMouseoutFeature
+  });
+}
+
+function handleMouseoverFeature(e) {
+  info.update(e.target.feature.properties);
+}
+
+function handleMouseoutFeature(e) {
+  info.update();
 }
